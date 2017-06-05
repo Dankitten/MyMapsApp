@@ -108,6 +108,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    //Network tracking drops blue markers
     public void dropNetworkMarker(String provider) {
         LatLng userLocation = null;
         if (locationManager != null) {
@@ -133,18 +134,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d("dropMarker", "Lat: " + myLocation.getLatitude() + " Long: " + myLocation.getLongitude());
             CameraUpdate update = CameraUpdateFactory.newLatLngZoom(userLocation, MY_LOC_ZOOM_FACTOR);
             //drops the marker on the map
-            if(isNetworkEnabled) {
+            if (isNetworkEnabled) {
                 Circle circle = mMap.addCircle(new CircleOptions()
                         .center(userLocation)
                         .radius(1)
-                        .strokeColor(Color.RED)
+                        .strokeColor(Color.BLUE)
                         .strokeWidth(2)
-                        .fillColor(Color.RED));
+                        .fillColor(Color.BLUE));
                 mMap.animateCamera(update);
             }
         }
     }
 
+    //GPS tracking drops red markers
     public void dropGPSMarker(String provider) {
         LatLng userLocation = null;
         if (locationManager != null) {
@@ -170,31 +172,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d("dropMarker", "Lat: " + myLocation.getLatitude() + " Long: " + myLocation.getLongitude());
             CameraUpdate update = CameraUpdateFactory.newLatLngZoom(userLocation, MY_LOC_ZOOM_FACTOR);
             //drops the marker on the map
-                Circle circle = mMap.addCircle(new CircleOptions()
-                        .center(userLocation)
-                        .radius(1)
-                        .strokeColor(Color.BLUE)
-                        .strokeWidth(2)
-                        .fillColor(Color.BLUE));
-                mMap.animateCamera(update);
+            Circle circle = mMap.addCircle(new CircleOptions()
+                    .center(userLocation)
+                    .radius(1)
+                    .strokeColor(Color.RED)
+                    .strokeWidth(2)
+                    .fillColor(Color.RED));
+            mMap.animateCamera(update);
 
         }
     }
 
     public void getLocation(View v) {
+        if (tracking){
+            tracking = false;
+            Toast.makeText(this, "Tracking disabled", Toast.LENGTH_SHORT);
+            return;
+        }
+        else{
+
+            Toast.makeText(this, "Tracking", Toast.LENGTH_SHORT);
+            tracking = true;
+        }
+
         try {
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
-                //get GPS status
+            //get GPS status
             isGPSenabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-            if (isGPSenabled){
+            if (isGPSenabled) {
                 Log.d("MyMaps", "getLocation: GPS is enabled");
                 Toast.makeText(this, "GPS is enabled", Toast.LENGTH_LONG);
             }
 
             //get network status
             isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-            if (isNetworkEnabled){
+            if (isNetworkEnabled) {
                 Log.d("MyMaps", "getLocation: Network is enabled");
                 Toast.makeText(this, "Network is enabled", Toast.LENGTH_LONG);
 
@@ -216,16 +229,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     return;
                 }
 
-                if (isNetworkEnabled) {
-                    Log.d("MyMaps", "getLocation: Network enabled - requesting location updates");
-                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
-                            MIN_TIME_BETWEEN_UPDATES,
-                            MIN_DISTANCE_CHANGE_FOR_UPDATE,
-                            locationListenerNetwork);
-
-                    Log.d("MyMaps", "getLocation: NetworkLoc update request successful");
-                    Toast.makeText(this, "Using Network", Toast.LENGTH_SHORT);
-                }
                 if (isGPSenabled) {
                     Log.d("MyMaps", "getLocation: Network enabled - requesting location updates");
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
@@ -237,6 +240,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Toast.makeText(this, "Using GPS", Toast.LENGTH_SHORT);
                 }
             }
+
+                if (isNetworkEnabled) {
+                    Log.d("MyMaps", "getLocation: Network enabled - requesting location updates");
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                            MIN_TIME_BETWEEN_UPDATES,
+                            MIN_DISTANCE_CHANGE_FOR_UPDATE,
+                            locationListenerNetwork);
+
+                    Log.d("MyMaps", "getLocation: NetworkLoc update request successful");
+                    Toast.makeText(this, "Using Network", Toast.LENGTH_SHORT);
+                }
+
 
 
         } catch (Exception e) {
@@ -257,7 +272,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             dropGPSMarker(LocationManager.GPS_PROVIDER);
 
             //Remove the network location updates
-            //locationManager.removeUpdates(locationListenerNetwork);
+            if (ActivityCompat.checkSelfPermission(MapsActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapsActivity.this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            locationManager.removeUpdates(locationListenerNetwork);
 
         }
 
@@ -277,7 +302,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
             //case LocationProvider.OUT_OF_SERVICE --> request updates from NETWORK_PROVIDER
             //case LocationProvider.TEMPORARILY_UNAVAILABLE --> request updates from NETWORK_PROVIDER
-            else if(status== LocationProvider.OUT_OF_SERVICE|| status == LocationProvider.TEMPORARILY_UNAVAILABLE){
+            else if(status== LocationProvider.OUT_OF_SERVICE || status == LocationProvider.TEMPORARILY_UNAVAILABLE){
                 isNetworkEnabled=true;
                 isGPSenabled=false;
             }
