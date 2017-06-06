@@ -39,6 +39,13 @@
             android:onClick="changeMapType"
             android:text="Change Map Type" />
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Clear"
+            android:id="@+id/button"
+            android:onClick="clearMap" />
+
     </LinearLayout>
 
     <fragment

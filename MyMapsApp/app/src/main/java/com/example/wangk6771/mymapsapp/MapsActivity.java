@@ -2,6 +2,7 @@ package com.example.wangk6771.mymapsapp;
 
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.location.LocationProvider;
@@ -184,16 +185,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void getLocation(View v) {
-        if (tracking){
-            tracking = false;
-            Toast.makeText(this, "Tracking disabled", Toast.LENGTH_SHORT);
-            return;
-        }
-        else{
 
-            Toast.makeText(this, "Tracking", Toast.LENGTH_SHORT);
-            tracking = true;
-        }
 
         try {
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -211,6 +203,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Log.d("MyMaps", "getLocation: Network is enabled");
                 Toast.makeText(this, "Network is enabled", Toast.LENGTH_LONG);
 
+            }
+
+            if(tracking == false){
+                tracking = true;
+            }
+            else if(tracking){
+                tracking = false;
+                isGPSenabled = false;
+                isNetworkEnabled = false;
+                locationManager.removeUpdates(locationListenerNetwork);
+                locationManager.removeUpdates(locationListenerGPS);
             }
 
             if (!isGPSenabled && !isNetworkEnabled) {
@@ -239,7 +242,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Log.d("MyMaps", "getLocation: NetworkLoc update request successful");
                     Toast.makeText(this, "Using GPS", Toast.LENGTH_SHORT);
                 }
-            }
 
                 if (isNetworkEnabled) {
                     Log.d("MyMaps", "getLocation: Network enabled - requesting location updates");
@@ -251,6 +253,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Log.d("MyMaps", "getLocation: NetworkLoc update request successful");
                     Toast.makeText(this, "Using Network", Toast.LENGTH_SHORT);
                 }
+            }
+
+
 
 
 
@@ -379,9 +384,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     };
 
-    public void clearMap(){
+    public void clearMap(View v){
         mMap.clear();
         Log.d("clearMap", "Map cleared");
     }
+
 
 }
