@@ -2,6 +2,7 @@ package com.example.wangk6771.mymapsapp;
 
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
@@ -26,6 +27,10 @@ import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -54,6 +59,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        searchBarText = (EditText) findViewById(R.id.searchBar);
     }
 
 
@@ -85,28 +91,41 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void pointsOfInterest(View v) {
-        searchBarText = (EditText) findViewById(R.id.searchText);
-        String loc = searchBarText.getText().toString().toLowerCase();
-        if (loc.equals("torrey pines beach")) {
-            LatLng beach = new LatLng(32.9362, -117.2614);
-            mMap.addMarker(new MarkerOptions().position(beach).title("Torrey Pines Beach"));
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(beach));
+        String loc = searchBarText.getText().toString();
+        if(!loc.equals("")) {
+            if (myLocation != null) {
+                Geocoder geocoder = new Geocoder(this, Locale.US);
+                List<Address> addressList = null;
+                try {
+                    LatLng userLocation = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
+                    CameraUpdate update = CameraUpdateFactory.newLatLngZoom(userLocation, MY_LOC_ZOOM_FACTOR);
+                    addressList = geocoder.getFromLocationName(loc, 500, myLocation.getLatitude() - .083333,
+                            myLocation.getLongitude()-.083333,
+                            myLocation.getLatitude() +.083333,
+                            myLocation.getLongitude() +.083333);
+                    for (int i = 0; i < addressList.size(); i++) {
+                        mMap.addMarker(new MarkerOptions()
+                                .position(new LatLng(addressList.get(i).getLatitude(),
+                                        addressList.get(i).getLongitude()))
+                                .title(loc));
+
+                        mMap.moveCamera(CameraUpdateFactory
+                                .newLatLng(new LatLng(addressList.get(i).getLatitude(),
+                                        addressList.get(i).getLongitude())));
+                    }
+
+                } catch (IOException ioException) {
+                    Log.d(TAG, "pointOfInterest: Error getting location", ioException);
+                } catch (IllegalArgumentException illegalArgumentException) {
+                    for (int i = 0; i < addressList.size(); i++) {
+                        Log.d(TAG, "pointsofInterest: Latitude " + addressList.get(i).getLatitude() + " Longitude " + addressList.get(i).getLongitude(), illegalArgumentException);
+                    }
+                }
+            }
+            else Toast.makeText(this, "You need to be tracking to find points of interest nearby", Toast.LENGTH_SHORT).show();
         }
-        if (loc.equals("airport")) {
-            LatLng airport = new LatLng(32.7338006, -117.193303792);
-            mMap.addMarker(new MarkerOptions().position(airport).title("San Diego Airport"));
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(airport));
-        }
-        if (loc.equals("seaworld")) {
-            LatLng seaworld = new LatLng(32.7648, -117.2266);
-            mMap.addMarker(new MarkerOptions().position(seaworld).title("Seaworld"));
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(seaworld));
-        }
-        if (loc.equals("zoo")) {
-            LatLng zoo = new LatLng(32.7347483943, -117.150943196);
-            mMap.addMarker(new MarkerOptions().position(zoo).title("San Diego Zoo"));
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(zoo));
-        }
+
+
     }
 
     //Network tracking drops blue markers
